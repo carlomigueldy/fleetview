@@ -7,3 +7,8 @@ test("renders the FleetView shell", () => {
   expect(screen.getByTestId("app-shell")).toBeInTheDocument();
   expect(screen.getByText("FleetView")).toBeInTheDocument();
 });
+
+test("shows Activity feed header when no agent is selected", () => {
+  render(<App />);
+  expect(screen.getByText("Activity")).toBeInTheDocument();
+});
