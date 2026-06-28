@@ -1,9 +1,11 @@
 @import "tailwindcss";
 @theme {
-  --color-cream: #F4F1EA; --color-paper: #FFFFFF; --color-ink: #1A1714;
+  --color-cream: #F4F1EA; --color-cream2: #ECE7DB; --color-paper: #FFFFFF; --color-ink: #1A1714;
   --color-clay: #C96442; --color-sage: #7C8B6F; --color-slate: #3D4A52;
   --color-hairline: #DCD5C6; --color-muted: #8C8475; --color-idle: #C3BBA9;
   --font-display: "Fraunces", serif; --font-body: "Inter", sans-serif; --font-mono: "JetBrains Mono", monospace;
 }
+@keyframes breathe { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes br { 0%, 100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.5); opacity: .15; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
-body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-body); margin: 0; }
+body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-body); margin: 0; overflow: hidden; }
