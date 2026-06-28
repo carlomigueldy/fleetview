@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@theme {
+  --color-cream: #F4F1EA; --color-paper: #FFFFFF; --color-ink: #1A1714;
+  --color-clay: #C96442; --color-sage: #7C8B6F; --color-slate: #3D4A52;
+  --color-hairline: #DCD5C6; --color-muted: #8C8475; --color-idle: #C3BBA9;
+  --font-display: "Fraunces", serif; --font-body: "Inter", sans-serif; --font-mono: "JetBrains Mono", monospace;
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+body { background: var(--color-cream); color: var(--color-ink); font-family: var(--font-body); margin: 0; }
