@@ -13,6 +13,8 @@
 
 *Local-first · reuses your existing CLI auth · no accounts, no cloud, no API key*
 
+![FleetView — live colony tree of a Claude Code session](docs/superpowers/specs/mockups/rv-tree.png)
+
 </div>
 
 ---
