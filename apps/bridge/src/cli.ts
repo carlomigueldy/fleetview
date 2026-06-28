@@ -12,7 +12,7 @@ const log = new EventLog(join(homedir(), ".fleetview.sqlite"));
 const watcher = new SessionWatcher(root, log);
 watcher.start(750);
 void watcher.scanOnce();
-const srv = createServer({ log, watcher, uiDir, port });
+const srv = createServer({ log, watcher, uiDir, port, hostname: "127.0.0.1" });
 const url = `http://localhost:${srv.port}`;
 console.log(`FleetView running at ${url}`);
 try { Bun.spawn(["xdg-open", url]); } catch { /* headless ok */ }

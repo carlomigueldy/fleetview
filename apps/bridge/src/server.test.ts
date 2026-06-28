@@ -54,6 +54,59 @@ test("list returns all session ids", async () => {
   srv.stop();
 });
 
+test("binds to loopback only by default", () => {
+  const log = new EventLog();
+  const watcher = new SessionWatcher("/nonexistent-skip", log);
+  const srv = createServer({ log, watcher, port: 0 });
+  expect(srv.hostname).toBe("127.0.0.1");
+  srv.stop();
+});
+
+test("rejects a cross-origin websocket handshake (CSWSH)", async () => {
+  const log = new EventLog();
+  const watcher = new SessionWatcher("/nonexistent-skip", log);
+  const srv = createServer({ log, watcher, port: 0 });
+  const res = await fetch(`http://127.0.0.1:${srv.port}/ws`, {
+    headers: { origin: "http://evil.example.com" },
+  });
+  expect(res.status).toBe(403);
+  srv.stop();
+});
+
+test("allows an allow-listed origin past the origin check", async () => {
+  const log = new EventLog();
+  const watcher = new SessionWatcher("/nonexistent-skip", log);
+  const srv = createServer({ log, watcher, port: 0, allowedOrigins: ["http://good.example.com"] });
+  // A plain GET (no upgrade headers) with an allowed origin passes the origin
+  // gate and reaches the upgrade attempt, which fails with 400 (not 403).
+  const res = await fetch(`http://127.0.0.1:${srv.port}/ws`, {
+    headers: { origin: "http://good.example.com" },
+  });
+  expect(res.status).toBe(400);
+  srv.stop();
+});
+
+test("malformed websocket frame does not throw", async () => {
+  const log = new EventLog();
+  log.append([ev(0)]);
+  const watcher = new SessionWatcher("/nonexistent-skip", log);
+  const srv = createServer({ log, watcher, port: 0 });
+  const stillAlive = await new Promise<boolean>((resolve) => {
+    const ws = new WebSocket(`ws://localhost:${srv.port}/ws`);
+    ws.onopen = () => {
+      ws.send("this is not json{{{");
+      ws.send(JSON.stringify({ type: "subscribe", sessionId: "s1", afterSeq: -1 }));
+    };
+    ws.onmessage = (m) => {
+      const msg = JSON.parse(m.data as string);
+      if (msg.type === "events") { resolve(true); ws.close(); }
+    };
+    setTimeout(() => resolve(false), 1000);
+  });
+  expect(stillAlive).toBe(true);
+  srv.stop();
+});
+
 test("live events are streamed only to matching subscriber", async () => {
   const scratchDir = `/tmp/fleetview-test-live-${Date.now()}`;
   const projDir = join(scratchDir, "proj");

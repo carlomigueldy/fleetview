@@ -7,7 +7,27 @@ import type { ClientMsg, ServerMsg } from "./ws-protocol";
 
 type SocketData = { sessionId?: string };
 
-export function createServer(opts: { log: EventLog; watcher: SessionWatcher; uiDir?: string; port: number }) {
+export function createServer(opts: {
+  log: EventLog;
+  watcher: SessionWatcher;
+  uiDir?: string;
+  port: number;
+  hostname?: string;
+  allowedOrigins?: string[];
+}) {
+  // Local single-user tool: bind to loopback by default so the bridge (and the
+  // session transcripts it serves) is never reachable from the LAN.
+  const hostname = opts.hostname ?? "127.0.0.1";
+  // CSWSH defense: a browser always sends an Origin on a cross-site WS handshake.
+  // Reject any present Origin not on the allow-list; an absent Origin (native
+  // clients such as curl/tests) is permitted.
+  const allowed = new Set(
+    opts.allowedOrigins ?? [
+      `http://localhost:${opts.port}`,
+      `http://127.0.0.1:${opts.port}`,
+      ...(process.env.FLEETVIEW_DEV_ORIGIN ? [process.env.FLEETVIEW_DEV_ORIGIN] : []),
+    ],
+  );
   const subscribers = new Set<ServerWebSocket<SocketData>>();
   opts.watcher.onEvents((events) => {
     for (const ws of subscribers) {
@@ -22,9 +42,14 @@ export function createServer(opts: { log: EventLog; watcher: SessionWatcher; uiD
 
   const server = Bun.serve<SocketData>({
     port: opts.port,
+    hostname,
     fetch(req, srv) {
       const url = new URL(req.url);
       if (url.pathname === "/ws") {
+        const origin = req.headers.get("origin");
+        if (origin !== null && !allowed.has(origin)) {
+          return new Response("forbidden origin", { status: 403 });
+        }
         if (srv.upgrade(req, { data: {} })) return;
         return new Response("upgrade failed", { status: 400 });
       }
@@ -43,12 +68,20 @@ export function createServer(opts: { log: EventLog; watcher: SessionWatcher; uiD
     websocket: {
       open(ws: ServerWebSocket<SocketData>) { subscribers.add(ws); },
       close(ws: ServerWebSocket<SocketData>) { subscribers.delete(ws); },
-      message(ws: ServerWebSocket<SocketData>, raw: string) {
-        const msg = JSON.parse(raw) as ClientMsg;
+      message(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
+        // Defensive: never let a malformed or unexpected frame throw in the handler.
+        let msg: ClientMsg;
+        try {
+          msg = JSON.parse(typeof raw === "string" ? raw : raw.toString()) as ClientMsg;
+        } catch {
+          return;
+        }
+        if (!msg || typeof msg !== "object") return;
         if (msg.type === "list") {
           const reply: ServerMsg = { type: "sessions", sessions: opts.log.sessions() };
           ws.send(JSON.stringify(reply));
         } else if (msg.type === "subscribe") {
+          if (typeof msg.sessionId !== "string" || typeof msg.afterSeq !== "number") return;
           ws.data.sessionId = msg.sessionId;
           const backlog: SessionEvent[] = opts.log.since(msg.sessionId, msg.afterSeq);
           const reply: ServerMsg = { type: "events", events: backlog };
@@ -57,5 +90,5 @@ export function createServer(opts: { log: EventLog; watcher: SessionWatcher; uiD
       },
     },
   });
-  return { stop: () => server.stop(true), port: server.port };
+  return { stop: () => server.stop(true), port: server.port, hostname };
 }
