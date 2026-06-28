@@ -8,6 +8,7 @@ export type RawEntry = {
   isSidechain: boolean;
   agentId: string | null;        // hex ID of the subagent; present when isSidechain:true; matches agent-{agentId}.jsonl filename stem
   attributionAgent: string | null; // e.g. "Explore" or "workflow-subagent"; present on subagent entries
+  gitBranch: string | null;      // current git branch at the time the entry was written; e.g. "feat/observe-mvp"
   message: unknown;
 };
 
@@ -30,6 +31,7 @@ export async function readEntries(file: string): Promise<RawEntry[]> {
         isSidechain: Boolean(o.isSidechain),
         agentId: o.agentId ?? null,
         attributionAgent: o.attributionAgent ?? null,
+        gitBranch: typeof o.gitBranch === "string" && o.gitBranch ? o.gitBranch : null,
         message: o.message ?? null,
       });
     } catch {

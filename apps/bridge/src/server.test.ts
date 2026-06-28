@@ -5,6 +5,7 @@ import { createServer } from "./server";
 import { EventLog } from "./store/event-log";
 import { SessionWatcher } from "./watcher/session-watcher";
 import type { SessionEvent } from "@fleetview/protocol";
+import type { SessionMeta } from "./ws-protocol";
 
 const ev = (seq: number, sessionId = "s1"): SessionEvent => ({
   sessionId,
@@ -35,13 +36,15 @@ test("subscribe replays backlog over websocket", async () => {
   srv.stop();
 });
 
-test("list returns all session ids", async () => {
+test("list returns SessionMeta objects for all sessions", async () => {
   const log = new EventLog();
   log.append([ev(0, "s1"), ev(0, "s2")]);
+  log.setMeta("s1", "/home/user/project-alpha", 1000);
+  log.setMeta("s2", "/home/user/project-beta", 2000);
   const watcher = new SessionWatcher("/nonexistent-skip", log);
   const srv = createServer({ log, watcher, port: 0 });
 
-  const sessions = await new Promise<string[]>((resolve) => {
+  const sessions = await new Promise<SessionMeta[]>((resolve) => {
     const ws = new WebSocket(`ws://localhost:${srv.port}/ws`);
     ws.onopen = () => ws.send(JSON.stringify({ type: "list" }));
     ws.onmessage = (m) => {
@@ -49,8 +52,13 @@ test("list returns all session ids", async () => {
       if (msg.type === "sessions") { resolve(msg.sessions); ws.close(); }
     };
   });
-  expect(sessions).toContain("s1");
-  expect(sessions).toContain("s2");
+  const ids = sessions.map((s) => s.sessionId);
+  expect(ids).toContain("s1");
+  expect(ids).toContain("s2");
+  const s1 = sessions.find((s) => s.sessionId === "s1")!;
+  expect(s1.cwd).toBe("/home/user/project-alpha");
+  expect(s1.label).toBe("project-alpha");
+  expect(s1.mtimeMs).toBe(1000);
   srv.stop();
 });
 

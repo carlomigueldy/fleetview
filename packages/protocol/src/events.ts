@@ -19,7 +19,7 @@ export const SessionEventSchema = z.discriminatedUnion("kind", [
   Base.extend({ kind: z.literal("subagent_spawn"), label: z.string() }),
   Base.extend({ kind: z.literal("subagent_exit"), status: StatusSchema }),
   Base.extend({ kind: z.literal("session_status"), status: StatusSchema }),
-  Base.extend({ kind: z.literal("token_usage"), inTokens: z.number().int(), outTokens: z.number().int() }),
+  Base.extend({ kind: z.literal("token_usage"), inTokens: z.number().int(), outTokens: z.number().int(), model: z.string().optional() }),
 ]);
 
 export type SessionEvent = z.infer<typeof SessionEventSchema>;

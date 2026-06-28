@@ -4,7 +4,7 @@ import { readEntries } from "./read";
 
 export type DiscoveredSession = { sessionId: string; file: string; cwd: string; mtimeMs: number };
 
-async function walk(dir: string): Promise<string[]> {
+export async function walk(dir: string): Promise<string[]> {
   const out: string[] = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);

@@ -29,6 +29,20 @@ export function createServer(opts: {
     ],
   );
   const subscribers = new Set<ServerWebSocket<SocketData>>();
+  // Re-broadcast the full sessions list after every watcher scan so status pips
+  // (working/idle) stay live for all connected UI clients — not just on initial 'list'.
+  // Guard: skip when no clients are connected (avoids a full DB query + JSON.stringify
+  // on every 750ms tick with an idle UI), and deduplicate byte-identical payloads
+  // (status flips on the 2-min mtime boundary so the list rarely changes between ticks).
+  let lastSessionsJson: string | null = null;
+  opts.watcher.onScan(() => {
+    if (!subscribers.size) return;
+    const msg: ServerMsg = { type: "sessions", sessions: opts.log.sessions() };
+    const json = JSON.stringify(msg);
+    if (json === lastSessionsJson) return;
+    lastSessionsJson = json;
+    for (const ws of subscribers) ws.send(json);
+  });
   opts.watcher.onEvents((events) => {
     for (const ws of subscribers) {
       const sid = ws.data.sessionId;
