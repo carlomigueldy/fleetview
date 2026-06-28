@@ -1,0 +1,11 @@
+{
+  "name": "fleetview",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "bun run --filter '*' test",
+    "test:protocol": "cd packages/protocol && bunx vitest run",
+    "test:bridge": "cd apps/bridge && bun test",
+    "test:ui": "cd apps/ui && bunx vitest run"
+  }
+}
