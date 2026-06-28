@@ -27,24 +27,24 @@
 - Create: `docs/superpowers/spikes/2026-06-28-transcript-format.md`
 - Create: `packages/protocol/fixtures/*.jsonl` (captured real transcript excerpts)
 
-- [ ] **Step 1: Locate real transcripts**
+- [x] **Step 1: Locate real transcripts**
 
 Run: `ls ~/.claude/projects/ && find ~/.claude/projects -name '*.jsonl' | head`
 Expected: at least one `.jsonl` file. If none, run a quick `claude -p "list files here"` in any repo to generate one.
 
-- [ ] **Step 2: Generate a transcript that contains subagents and a workflow**
+- [x] **Step 2: Generate a transcript that contains subagents and a workflow**
 
 In a scratch repo, run a session that spawns subagents (e.g. ask Claude to "use the Explore agent to find X, then summarize"). Then locate the newest jsonl:
 Run: `find ~/.claude/projects -name '*.jsonl' -newermt '-10 min' -print`
 
-- [ ] **Step 3: Capture three fixtures**
+- [x] **Step 3: Capture three fixtures**
 
 Copy representative excerpts (anonymize any paths/secrets) into `packages/protocol/fixtures/`:
 - `simple-session.jsonl` — a session with user + assistant + tool_use + tool_result, no subagents.
 - `subagent-session.jsonl` — a session where the main agent spawns a subagent (Task tool) and the subagent has its own entries (look for `isSidechain: true` and the `parentUuid` chain).
 - `workflow-session.jsonl` — if a Workflow ran, a session showing workflow phases / multiple parallel agents.
 
-- [ ] **Step 4: Document findings**
+- [x] **Step 4: Document findings**
 
 In `docs/superpowers/spikes/2026-06-28-transcript-format.md`, record, with concrete examples copied from the fixtures:
 - The exact top-level fields on each line (`type`, `uuid`, `parentUuid`, `timestamp`, `sessionId`, `cwd`, `isSidechain`, `message`, etc.).
@@ -303,10 +303,13 @@ git commit -m "feat(protocol): add SessionEvent contract with zod validation"
 **Interfaces:**
 - Produces:
   - `discoverSessions(root: string): Promise<DiscoveredSession[]>` where `DiscoveredSession = { sessionId: string; file: string; cwd: string; mtimeMs: number }`.
-  - `type RawEntry = { uuid: string; parentUuid: string | null; type: string; sessionId: string; cwd: string; ts: number; isSidechain: boolean; message: unknown }`.
+  - `type RawEntry = { uuid: string; parentUuid: string | null; type: string; sessionId: string; cwd: string; ts: number; isSidechain: boolean; agentId: string | null; attributionAgent: string | null; message: unknown }`.
+    - `agentId`: present on sidechain entries (`isSidechain: true`); matches the filename stem of the subagent file (`agent-{agentId}.jsonl`). Always `null` for main-agent entries.
+    - `attributionAgent`: present on workflow-subagent entries (e.g. `"workflow-subagent"`); `null` otherwise.
+    - Sidechain entries always live in **separate files** (`{session-uuid}/subagents/agent-{agentId}.jsonl`), never mixed into the main `.jsonl`.
   - `readEntries(file: string): Promise<RawEntry[]>` — parses each JSONL line into a `RawEntry`, skipping malformed lines.
 
-> Field names below assume the Task 0 spike confirmed `uuid`/`parentUuid`/`type`/`sessionId`/`cwd`/`timestamp`/`isSidechain`/`message`. Adjust the mapping in `read.ts` if the spike found different names.
+> Task 0 spike confirmed top-level fields: `uuid`, `parentUuid`, `type`, `sessionId`, `cwd`, `timestamp`, `isSidechain`, `message`. Additional fields present in real transcripts: `agentId` (on sidechain entries), `attributionAgent` (on workflow-subagent entries). Include both in `RawEntry` for downstream normalize use.
 
 - [ ] **Step 1: Write a fixture transcript**
 
@@ -368,6 +371,8 @@ export type RawEntry = {
   cwd: string;
   ts: number;
   isSidechain: boolean;
+  agentId: string | null;        // hex ID of the subagent; present when isSidechain:true; matches agent-{agentId}.jsonl filename stem
+  attributionAgent: string | null; // e.g. "workflow-subagent"; present on workflow-subagent entries
   message: unknown;
 };
 
@@ -388,6 +393,8 @@ export async function readEntries(file: string): Promise<RawEntry[]> {
         cwd: o.cwd ?? "",
         ts: o.timestamp ? Date.parse(o.timestamp) : 0,
         isSidechain: Boolean(o.isSidechain),
+        agentId: o.agentId ?? null,
+        attributionAgent: o.attributionAgent ?? null,
         message: o.message ?? null,
       });
     } catch {
@@ -455,12 +462,13 @@ git commit -m "feat(bridge): discover sessions and read raw transcript entries"
 **Interfaces:**
 - Consumes: `RawEntry` (Task 3), `SessionEvent` (Task 2).
 - Produces: `normalize(entries: RawEntry[]): SessionEvent[]`. Rules:
-  - `agentId` = the entry's own sidechain root: for non-sidechain entries, `agentId = "main"`; for sidechain entries, `agentId` = the uuid of the `Task` tool_use that started the sidechain (resolved via parent chain), `parentAgentId = "main"`.
-  - A `type:"assistant"` message whose content contains a `tool_use` block with `name === "Task"` emits a `subagent_spawn` (label from the tool input's `description` or `subagent_type`).
-  - Other `tool_use` blocks emit `tool_call` (`callId` = block `id`, `tool` = block `name`, `target` = best-effort from input: `file_path` || `command` || `pattern` || "").
+  - `agentId` for main-agent entries (`isSidechain: false`): `"main"`. For sidechain entries: use `RawEntry.agentId` directly (the hex ID present on the entry). `parentAgentId = "main"` for all sidechain entries (MVP: flat hierarchy, direct subagents only).
+  - A `type:"assistant"` message whose content contains a `tool_use` block with `name === "Agent"`, `name === "Workflow"`, or `name === "TaskCreate"` emits a `subagent_spawn`. Label: `input.description || input.subagent_type || input.subject || b.name`. NOTE: There is no tool named `"Task"` — the real spawn tools are `"Agent"` (direct subagent), `"Workflow"` (multi-phase, single `scriptPath` input), and `"TaskCreate"` (SDK/queued).
+  - Other `tool_use` blocks emit `tool_call` (`callId` = block `id`, `tool` = block `name`, `target` = best-effort from input: `file_path` || `command` || `pattern` || `path` || "").
   - `tool_result` blocks (in `type:"user"` messages) emit `tool_result` (`callId` = `tool_use_id`, `ok` = `!is_error`, `summary` = truncated content).
   - `text` blocks and string content emit `message`.
   - `seq` is a per-session counter assigned in input order, starting at 0.
+  - Subagent linkage: sidechain entries come from separate files and carry `RawEntry.agentId` already — do not traverse `parentUuid` to find the agentId. The MVP bridge reads sidechain files separately and their entries already have the correct `agentId`.
 
 - [ ] **Step 1: Write failing tests**
 
@@ -472,7 +480,7 @@ import type { RawEntry } from "../transcript/read";
 
 const mk = (p: Partial<RawEntry>): RawEntry => ({
   uuid: "u", parentUuid: null, type: "assistant", sessionId: "s1",
-  cwd: "/p", ts: 1, isSidechain: false, message: null, ...p,
+  cwd: "/p", ts: 1, isSidechain: false, agentId: null, attributionAgent: null, message: null, ...p,
 });
 
 test("text assistant message becomes a message event on main", () => {
@@ -481,14 +489,21 @@ test("text assistant message becomes a message event on main", () => {
   expect(evs[0]).toMatchObject({ kind: "message", role: "assistant", text: "hello", agentId: "main", parentAgentId: null, seq: 0 });
 });
 
-test("Task tool_use becomes subagent_spawn", () => {
+test("Agent tool_use becomes subagent_spawn", () => {
   const evs = normalize([mk({ uuid: "u2", message: { role: "assistant", content: [
-    { type: "tool_use", id: "t1", name: "Task", input: { subagent_type: "explore", description: "find auth" } },
+    { type: "tool_use", id: "t1", name: "Agent", input: { subagent_type: "Explore", description: "find auth" } },
   ] } })]);
   expect(evs[0]).toMatchObject({ kind: "subagent_spawn", label: "find auth", agentId: "t1", parentAgentId: "main" });
 });
 
-test("non-Task tool_use becomes tool_call with target", () => {
+test("Workflow tool_use becomes subagent_spawn", () => {
+  const evs = normalize([mk({ uuid: "u2b", message: { role: "assistant", content: [
+    { type: "tool_use", id: "wf1", name: "Workflow", input: { scriptPath: "/tmp/ui-ux-workflow.js" } },
+  ] } })]);
+  expect(evs[0]).toMatchObject({ kind: "subagent_spawn", agentId: "wf1", parentAgentId: "main" });
+});
+
+test("non-spawn tool_use becomes tool_call with target", () => {
   const evs = normalize([mk({ uuid: "u3", message: { role: "assistant", content: [
     { type: "tool_use", id: "c1", name: "Read", input: { file_path: "/p/a.ts" } },
   ] } })]);
@@ -533,21 +548,18 @@ function truncate(c: unknown, n = 200): string {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
+const SPAWN_TOOLS = new Set(["Agent", "Workflow", "TaskCreate"]);
+
 export function normalize(entries: RawEntry[]): SessionEvent[] {
   const out: SessionEvent[] = [];
-  // Map a sidechain entry's uuid/parentUuid chain to the spawning Task id ("agentId").
-  const agentByUuid = new Map<string, string>(); // entry uuid -> agentId it belongs to
   let seq = 0;
 
   for (const e of entries) {
     const msg = e.message as any;
     const sessionId = e.sessionId;
-    // Resolve which agent this entry belongs to.
-    let agentId = "main";
-    if (e.isSidechain) {
-      agentId = (e.parentUuid && agentByUuid.get(e.parentUuid)) || "main";
-    }
-    agentByUuid.set(e.uuid, agentId);
+    // Sidechain entries carry agentId directly (from the agent-{agentId}.jsonl file).
+    // Main-agent entries are always "main".
+    const agentId = e.isSidechain && e.agentId ? e.agentId : "main";
     const parentAgentId = agentId === "main" ? null : "main";
     const baseFor = (aId: string) => ({ sessionId, agentId: aId, parentAgentId: aId === "main" ? null : "main", ts: e.ts });
 
@@ -561,10 +573,9 @@ export function normalize(entries: RawEntry[]): SessionEvent[] {
     for (const b of blocks) {
       if (b.type === "text" && b.text) {
         out.push({ ...baseFor(agentId), seq: seq++, kind: "message", role: msg.role ?? "assistant", text: b.text });
-      } else if (b.type === "tool_use" && b.name === "Task") {
-        const label = b.input?.description || b.input?.subagent_type || "subagent";
-        // The spawned subagent's agentId is the Task tool_use id; its sidechain entries link here.
-        agentByUuid.set(b.id, b.id);
+      } else if (b.type === "tool_use" && SPAWN_TOOLS.has(b.name)) {
+        // Real spawn tool names: "Agent" (direct subagent), "Workflow" (multi-phase, scriptPath input), "TaskCreate" (SDK/queued).
+        const label = b.input?.description || b.input?.subagent_type || b.input?.subject || b.name;
         out.push({ sessionId, agentId: b.id, parentAgentId: "main", ts: e.ts, seq: seq++, kind: "subagent_spawn", label });
       } else if (b.type === "tool_use") {
         out.push({ ...baseFor(agentId), seq: seq++, kind: "tool_call", callId: b.id, tool: b.name, target: targetOf(b.input) });
@@ -577,7 +588,7 @@ export function normalize(entries: RawEntry[]): SessionEvent[] {
 }
 ```
 
-> Note on subagent linking: a Task tool_use creates an agent keyed by its tool_use id. Subagent sidechain entries link to it through the `parentUuid` chain; `agentByUuid` propagates the agentId down the chain. If the spike showed sidechains link by a different field, adjust the `isSidechain` branch accordingly.
+> Note on subagent linkage: sidechain entries always live in separate `agent-{agentId}.jsonl` files and carry `agentId` directly on the entry — no `parentUuid` chain traversal needed. The spike confirmed `"isSidechain":true` entries never appear in the main session `.jsonl`.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
