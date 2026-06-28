@@ -1,0 +1,89 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FleetView · Colony × Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F4F1EA;--cream2:#ECE7DB;--paper:#fff;--ink:#1A1714;--clay:#C96442;--sage:#7C8B6F;--slate:#3D4A52;--line:#dcd5c6;--mut:#8c8475}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--cream);color:var(--ink);font-family:Inter,sans-serif;height:100vh;overflow:hidden}
+.app{display:grid;grid-template-columns:240px 1fr 300px;grid-template-rows:58px 1fr;height:100vh}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--line)}
+.brand{font-family:Fraunces;font-weight:600;font-size:21px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--clay);animation:br 2.4s ease-in-out infinite}
+@keyframes br{0%,100%{opacity:.45}50%{opacity:1}}
+.tag{font-family:JetBrains Mono;font-size:11px;color:var(--mut);border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+.grow{flex:1}
+.newbtn{font-family:Inter;font-size:12.5px;font-weight:600;color:#fff;background:var(--ink);padding:7px 14px;border-radius:9px;cursor:pointer}
+.side{border-right:1px solid var(--line);padding:20px 14px}
+.lbl{font-family:JetBrains Mono;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin:2px 6px 14px}
+.sess{padding:11px 12px;border-radius:12px;margin-bottom:7px;cursor:pointer;transition:.22s}
+.sess:hover{background:var(--cream2)}
+.sess.on{background:var(--paper);box-shadow:0 1px 0 var(--line),0 6px 20px -12px rgba(60,40,20,.3)}
+.sess h4{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:9px}
+.sess p{font-family:JetBrains Mono;font-size:10.5px;color:var(--mut);margin-top:5px}
+.pip{width:7px;height:7px;border-radius:50%;flex:none}
+.pip.run{background:var(--sage)}.pip.wait{background:var(--clay)}.pip.idle{background:#c3bba9}
+.stage{position:relative;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero{position:absolute;left:40px;top:34px;z-index:3;pointer-events:none;max-width:30ch}
+.hero .eb{font-family:JetBrains Mono;font-size:11px;letter-spacing:.2em;color:var(--clay);text-transform:uppercase}
+.hero h1{font-family:Fraunces;font-weight:600;font-size:40px;line-height:1.02;letter-spacing:-.02em;margin:12px 0 10px}
+.hero h1 em{font-style:italic;color:var(--clay)}
+.hero p{color:var(--slate);font-size:14px;line-height:1.55}
+.foot{position:absolute;left:40px;bottom:26px;z-index:3;font-family:JetBrains Mono;font-size:11px;color:var(--mut);display:flex;gap:18px}
+.foot span{display:flex;align-items:center;gap:7px}
+.rightp{border-left:1px solid var(--line);padding:20px 16px;overflow:auto;display:flex;flex-direction:column}
+.evt{font-size:12.5px;padding:9px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;color:var(--slate)}
+.evt b{color:var(--ink);font-weight:600}.evt .t{font-family:JetBrains Mono;font-size:10.5px;color:var(--mut)}
+.perm{margin-top:auto;border:1px solid var(--clay);background:var(--paper);border-radius:14px;padding:15px;box-shadow:0 10px 30px -16px rgba(201,100,66,.5)}
+.perm .k{font-family:JetBrains Mono;font-size:10px;letter-spacing:.12em;color:var(--clay);text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.perm code{display:block;font-family:JetBrains Mono;font-size:11.5px;color:var(--slate);background:var(--cream);padding:9px 11px;border-radius:9px;margin:10px 0;border:1px solid var(--line)}
+.btns{display:flex;gap:8px}.btn{flex:1;text-align:center;font-size:12.5px;font-weight:600;padding:9px;border-radius:10px;cursor:pointer}
+.btn.ok{background:var(--clay);color:#fff}.btn.no{color:var(--slate);border:1px solid var(--line)}
+</style></head>
+<body><div class="app">
+<div class="top"><div class="brand"><span class="dot"></span>FleetView</div><span class="tag">colony · 3 active</span><div class="grow"></div><span class="tag">⎇ local bridge</span><span class="tag">◆ your CLI auth</span><span class="newbtn">+ New session</span></div>
+<div class="side"><div class="lbl">Sessions</div>
+<div class="sess on"><h4><span class="pip run"></span>refactor-auth</h4><p>~/study-companion · 6 agents</p></div>
+<div class="sess"><h4><span class="pip wait"></span>migrate-db</h4><p>~/rag-local · awaiting you</p></div>
+<div class="sess"><h4><span class="pip run"></span>landing-redesign</h4><p>~/fable-landing · 2 agents</p></div>
+<div class="sess"><h4><span class="pip idle"></span>research-spike</h4><p>~/onchain-lab · idle</p></div>
+</div>
+<div class="stage"><canvas id="c"></canvas>
+<div class="hero"><div class="eb">refactor-auth · live colony</div><h1>Watch your agents <em>think.</em></h1><p>Every subagent and workflow branch, blooming from one root — drawn in ink, in real time.</p></div>
+<div class="foot"><span><span class="pip run"></span>working</span><span><span class="pip wait"></span>waiting on you</span><span><span class="pip idle"></span>idle</span></div>
+</div>
+<div class="rightp"><div class="lbl">Activity</div><div id="feed"></div>
+<div class="perm"><div class="k">⚠ permission · migrate-db</div><code>$ psql -f drop_legacy.sql</code><div class="btns"><div class="btn ok">Allow</div><div class="btn no">Deny</div></div></div>
+</div></div>
+<script>
+const cv=document.getElementById('c'),x=cv.getContext('2d');let W,H;
+function sz(){const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio;x.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=r.width;H=r.height}
+addEventListener('resize',sz);sz();
+const CLAY='#C96442',SAGE='#7C8B6F',INK='#1A1714';
+function col(st){return st==='wait'?CLAY:st==='idle'?'#c3bba9':SAGE}
+let nodes=[],edges=[];
+function build(){nodes=[];edges=[];const cx=W*.55,cy=H*.56;
+ const root={x:cx,y:cy,r:24,st:'run',lbl:'main',depth:0,seed:0};nodes.push(root);
+ [['explore',-1.05],['plan',-.3],['tdd-impl',.5],['review',1.25]].forEach(([l,a],i)=>{const ang=-Math.PI/2+a,d=150;const n={x:cx+Math.cos(ang)*d,y:cy+Math.sin(ang)*d,r:14,st:i===3?'wait':'run',lbl:l,depth:1,a:ang,seed:i*1.7};nodes.push(n);edges.push([root,n]);
+  if(i===2){[['write-test',-.5],['impl',.4]].forEach(([l2,a2],j)=>{const n2={x:n.x+Math.cos(ang+a2)*98,y:n.y+Math.sin(ang+a2)*98,r:9.5,st:'run',lbl:l2,depth:2,seed:9+j};nodes.push(n2);edges.push([n,n2])})}});
+}
+build();addEventListener('resize',()=>setTimeout(build,30));
+let t=0;function loop(){t+=.016;x.clearRect(0,0,W,H);
+ // organic ink edges with clay particles flowing (A's behavior, atelier ink)
+ edges.forEach(([a,b])=>{const mx=(a.x+b.x)/2+(b.seed%2?12:-12),my=(a.y+b.y)/2-16;
+  x.strokeStyle='rgba(26,23,20,.32)';x.lineWidth=1.5;x.lineCap='round';x.beginPath();x.moveTo(a.x,a.y);x.quadraticCurveTo(mx,my,b.x,b.y);x.stroke();
+  if(b.st!=='idle'){for(let k=0;k<3;k++){const p=((t*.4)+k/3)%1;const ix=(1-p)*(1-p)*a.x+2*(1-p)*p*mx+p*p*b.x;const iy=(1-p)*(1-p)*a.y+2*(1-p)*p*my+p*p*b.y;x.fillStyle=b.st==='wait'?CLAY:SAGE;x.globalAlpha=.85*(1-Math.abs(p-.5)*1.3);x.beginPath();x.arc(ix,iy,2.3,0,7);x.fill();x.globalAlpha=1}}
+ });
+ // nodes: white paper discs, ink/clay rings, breathing halo
+ nodes.forEach(n=>{const pulse=n.st==='idle'?0:(Math.sin(t*2+n.seed)*.5+.5);const c=col(n.st);
+  x.beginPath();x.arc(n.x,n.y,n.r+7+pulse*6,0,7);x.fillStyle=c;x.globalAlpha=.10+pulse*.08;x.fill();x.globalAlpha=1;
+  x.beginPath();x.arc(n.x,n.y,n.r,0,7);x.fillStyle='#fff';x.fill();
+  x.lineWidth=n.depth===0?2.4:2;x.strokeStyle=n.depth===0?INK:c;x.globalAlpha=n.st==='idle'?.5:1;x.stroke();x.globalAlpha=1;
+  if(n.st==='run'){x.beginPath();x.arc(n.x,n.y,n.r*.42*pulse+2,0,7);x.fillStyle=c;x.globalAlpha=.55;x.fill();x.globalAlpha=1}
+  x.fillStyle=INK;x.font=(n.depth===0?'600 14px ':'500 11.5px ')+'JetBrains Mono,monospace';x.textAlign='center';x.fillText(n.lbl,n.x,n.y+n.r+16)});
+ requestAnimationFrame(loop)}loop();
+const feed=document.getElementById('feed');
+const seed=[['tdd-impl','spawned','write-test'],['explore','read 14 files',''],['review','skill','code-review'],['plan','workflow phase','Verify'],['impl','edited','auth.ts']];
+feed.innerHTML=seed.map(([a,m,d],i)=>`<div class="evt"><span class="t">${String(i*3).padStart(2,'0')}s</span><span><b>${a}</b> ${m} ${d?'<span style="color:#C96442">'+d+'</span>':''}</span></div>`).join('');
+</script></body></html>

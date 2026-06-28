@@ -1,0 +1,70 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FleetView · New session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F4F1EA;--cream2:#ECE7DB;--paper:#fff;--ink:#1A1714;--clay:#C96442;--sage:#7C8B6F;--slate:#3D4A52;--line:#dcd5c6;--mut:#8c8475}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--cream);color:var(--ink);font-family:Inter,sans-serif;height:100vh;overflow:hidden}
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:58px 1fr;height:100vh;filter:saturate(.96)}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--line)}
+.brand{font-family:Fraunces;font-weight:600;font-size:21px;display:flex;align-items:center;gap:10px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--clay)}
+.grow{flex:1}.tag{font-family:JetBrains Mono;font-size:11px;color:var(--mut);border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+.side{border-right:1px solid var(--line);padding:20px 14px}
+.lbl{font-family:JetBrains Mono;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin:2px 6px 14px}
+.sess{padding:11px 12px;border-radius:12px;margin-bottom:7px}
+.sess h4{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:9px}
+.sess p{font-family:JetBrains Mono;font-size:10.5px;color:var(--mut);margin-top:5px}
+.pip{width:7px;height:7px;border-radius:50%;flex:none}.pip.run{background:var(--sage)}.pip.wait{background:var(--clay)}.pip.idle{background:#c3bba9}
+.stage{position:relative}
+.scrim{position:fixed;inset:0;background:rgba(40,30,20,.34);backdrop-filter:blur(3px);z-index:5;display:flex;align-items:center;justify-content:center}
+.modal{width:560px;background:var(--paper);border-radius:20px;border:1px solid var(--line);box-shadow:0 40px 90px -30px rgba(40,25,10,.55);overflow:hidden}
+.mhead{padding:22px 26px 6px}
+.mhead .eb{font-family:JetBrains Mono;font-size:11px;letter-spacing:.2em;color:var(--clay);text-transform:uppercase}
+.mhead h2{font-family:Fraunces;font-weight:600;font-size:26px;letter-spacing:-.01em;margin-top:8px}
+.mbody{padding:14px 26px 6px}
+.field{margin-bottom:16px}
+.field label{font-size:12px;font-weight:600;color:var(--slate);display:block;margin-bottom:7px}
+.field .hint{font-weight:400;color:var(--mut);font-family:JetBrains Mono;font-size:10.5px}
+.inp{width:100%;border:1px solid var(--line);background:var(--cream);border-radius:11px;padding:11px 13px;font-family:JetBrains Mono;font-size:13px;color:var(--ink)}
+.inp.path{display:flex;align-items:center;gap:8px;color:var(--slate)}
+.inp.path b{color:var(--ink);font-weight:500}
+.inp.path .browse{margin-left:auto;font-family:Inter;font-size:11.5px;font-weight:600;color:var(--clay);cursor:pointer}
+textarea.inp{font-family:Inter;font-size:13.5px;line-height:1.5;resize:none;height:84px}
+.row{display:flex;gap:12px}.row .field{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.seg div{flex:1;text-align:center;padding:9px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--mut)}
+.seg div.on{background:var(--ink);color:#fff}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{font-family:JetBrains Mono;font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--line);color:var(--slate);cursor:pointer}
+.chip.on{background:var(--sage);color:#fff;border-color:var(--sage)}
+.mfoot{display:flex;align-items:center;gap:10px;padding:16px 26px;border-top:1px solid var(--line);background:var(--cream2)}
+.mfoot .k{font-family:JetBrains Mono;font-size:11px;color:var(--mut)}
+.btn{font-size:13px;font-weight:600;padding:10px 18px;border-radius:11px;cursor:pointer}
+.btn.ghost{color:var(--slate);border:1px solid var(--line)}
+.btn.go{background:var(--clay);color:#fff}
+</style></head>
+<body><div class="app">
+<div class="top"><div class="brand"><span class="dot"></span>FleetView</div><span class="tag">colony · 3 active</span><div class="grow"></div><span class="tag">◆ your CLI auth</span></div>
+<div class="side"><div class="lbl">Sessions</div>
+<div class="sess"><h4><span class="pip run"></span>refactor-auth</h4><p>~/study-companion · 6 agents</p></div>
+<div class="sess"><h4><span class="pip wait"></span>migrate-db</h4><p>~/rag-local · awaiting you</p></div>
+<div class="sess"><h4><span class="pip run"></span>landing-redesign</h4><p>~/fable-landing · 2 agents</p></div>
+</div>
+<div class="stage"></div>
+</div>
+<div class="scrim"><div class="modal">
+<div class="mhead"><div class="eb">Launch & drive</div><h2>Start a new session</h2></div>
+<div class="mbody">
+ <div class="field"><label>Working directory</label><div class="inp path">📁 ~/<b>study-companion</b><span class="browse">Browse…</span></div></div>
+ <div class="field"><label>First prompt <span class="hint">— what should this session do?</span></label><textarea class="inp">Add OAuth login with Google. Use TDD, run the existing test suite, and open a PR when green.</textarea></div>
+ <div class="row">
+  <div class="field"><label>Model</label><div class="seg"><div class="on">Opus 4.8</div><div>Sonnet 4.6</div><div>Haiku 4.5</div></div></div>
+  <div class="field"><label>Permissions</label><div class="seg"><div class="on">Ask</div><div>Accept edits</div><div>Auto</div></div></div>
+ </div>
+ <div class="field"><label>Start in <span class="hint">— optional</span></label><div class="chips"><span class="chip on">Plan mode</span><span class="chip">superpowers</span><span class="chip">frontend-design</span><span class="chip">+ skill</span></div></div>
+</div>
+<div class="mfoot"><span class="k">⏎ to launch · esc to cancel</span><div class="grow"></div><span class="btn ghost">Cancel</span><span class="btn go">Launch session →</span></div>
+</div></div>
+</body></html>

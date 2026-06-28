@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FleetView · Node inspector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F4F1EA;--cream2:#ECE7DB;--paper:#fff;--ink:#1A1714;--clay:#C96442;--sage:#7C8B6F;--slate:#3D4A52;--line:#dcd5c6;--mut:#8c8475}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--cream);color:var(--ink);font-family:Inter,sans-serif;height:100vh;overflow:hidden}
+.app{display:grid;grid-template-columns:240px 1fr 416px;grid-template-rows:58px 1fr;height:100vh}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--line)}
+.brand{font-family:Fraunces;font-weight:600;font-size:21px;display:flex;align-items:center;gap:10px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--clay)}
+.grow{flex:1}.tag{font-family:JetBrains Mono;font-size:11px;color:var(--mut);border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+.side{border-right:1px solid var(--line);padding:20px 14px}
+.lbl{font-family:JetBrains Mono;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin:2px 6px 14px}
+.sess{padding:11px 12px;border-radius:12px;margin-bottom:7px}
+.sess.on{background:var(--paper);box-shadow:0 1px 0 var(--line),0 6px 20px -12px rgba(60,40,20,.3)}
+.sess h4{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:9px}
+.sess p{font-family:JetBrains Mono;font-size:10.5px;color:var(--mut);margin-top:5px}
+.pip{width:7px;height:7px;border-radius:50%;flex:none}.pip.run{background:var(--sage)}.pip.wait{background:var(--clay)}.pip.idle{background:#c3bba9}
+.stage{position:relative;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.hint{position:absolute;left:34px;top:28px;font-family:JetBrains Mono;font-size:11px;color:var(--mut);letter-spacing:.05em}
+/* inspector drawer */
+.insp{border-left:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;box-shadow:-20px 0 50px -30px rgba(40,25,10,.4)}
+.ihead{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.ihead .crumb{font-family:JetBrains Mono;font-size:10.5px;color:var(--mut)}
+.ihead h3{font-family:Fraunces;font-weight:600;font-size:22px;margin:8px 0 3px;display:flex;align-items:center;gap:9px}
+.badge{font-family:JetBrains Mono;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.badge.run{background:#eef1ea;color:var(--sage);border:1px solid #cfd8c5}
+.istats{display:flex;gap:18px;margin-top:11px;font-family:JetBrains Mono;font-size:11px;color:var(--mut)}
+.istats b{color:var(--ink);font-weight:600}
+.itabs{display:flex;gap:4px;padding:10px 16px 0;border-bottom:1px solid var(--line)}
+.itab{font-size:12px;font-weight:600;color:var(--mut);padding:8px 12px;border-radius:9px 9px 0 0;cursor:pointer}
+.itab.on{color:var(--ink);background:var(--cream)}
+.ibody{flex:1;overflow:auto;padding:16px 18px}
+.turn{margin-bottom:16px}
+.role{font-family:JetBrains Mono;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.msg{font-size:13px;line-height:1.55;color:var(--ink)}
+.tool{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:8px 0}
+.tool .th{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--cream);font-family:JetBrains Mono;font-size:11.5px}
+.tool .th .ic{color:var(--clay)}
+.tool .th .ok{margin-left:auto;color:var(--sage);font-size:11px}
+.tool pre{margin:0;padding:10px 12px;font-family:JetBrains Mono;font-size:11px;color:var(--slate);background:#fcfbf8;white-space:pre-wrap;border-top:1px solid var(--line)}
+.skill{display:inline-flex;align-items:center;gap:6px;font-family:JetBrains Mono;font-size:11px;color:var(--sage);background:#eef1ea;border:1px solid #cfd8c5;padding:3px 9px;border-radius:20px;margin:4px 0}
+</style></head>
+<body><div class="app">
+<div class="top"><div class="brand"><span class="dot"></span>FleetView</div><span class="tag">refactor-auth · 6 agents</span><div class="grow"></div><span class="tag">◆ your CLI auth</span></div>
+<div class="side"><div class="lbl">Sessions</div>
+<div class="sess on"><h4><span class="pip run"></span>refactor-auth</h4><p>~/study-companion · 6 agents</p></div>
+<div class="sess"><h4><span class="pip wait"></span>migrate-db</h4><p>~/rag-local · awaiting you</p></div>
+<div class="sess"><h4><span class="pip run"></span>landing-redesign</h4><p>~/fable-landing · 2 agents</p></div>
+</div>
+<div class="stage"><canvas id="c"></canvas><div class="hint">click a node to inspect · scroll to zoom · drag to pan</div></div>
+<div class="insp">
+ <div class="ihead"><div class="crumb">main › tdd-impl › <b style="color:#1A1714">write-test</b></div>
+  <h3><span class="pip run"></span>write-test <span class="badge run">working</span></h3>
+  <div class="istats"><span>model <b>Sonnet 4.6</b></span><span>tokens <b>8.4k</b></span><span>tools <b>11</b></span><span>up <b>42s</b></span></div>
+ </div>
+ <div class="itabs"><div class="itab on">Transcript</div><div class="itab">Tools</div><div class="itab">Raw events</div></div>
+ <div class="ibody">
+  <div class="turn"><div class="role">subagent prompt</div><div class="msg">Write failing tests for Google OAuth callback handling before any implementation. Cover success, denied consent, and state-mismatch.</div></div>
+  <div class="turn"><div class="role">assistant</div><div class="msg">Starting with the state-mismatch case — it's the security-critical path. Reading the existing auth tests for conventions first.</div>
+   <span class="skill">⚡ skill · test-driven-development</span>
+   <div class="tool"><div class="th"><span class="ic">▸</span> Read <b style="font-weight:500">tests/auth.spec.ts</b><span class="ok">✓ 124 lines</span></div></div>
+   <div class="tool"><div class="th"><span class="ic">▸</span> Write <b style="font-weight:500">tests/oauth.spec.ts</b><span class="ok">✓ created</span></div><pre>+ describe('google oauth callback', () => {
++   it('rejects mismatched state', async () => {
++     const res = await callback({ state: 'x' }, session('y'))
++     expect(res.status).toBe(403)</pre></div>
+  </div>
+  <div class="turn"><div class="role">assistant</div><div class="msg">Running the new spec to confirm it fails for the right reason.</div>
+   <div class="tool"><div class="th"><span class="ic">▸</span> Bash <b style="font-weight:500">npm test oauth.spec</b><span class="ok" style="color:#C96442">✗ 3 failing</span></div><pre>✗ rejects mismatched state — callback is not defined
+Expected red. Handing off to impl.</pre></div>
+  </div>
+ </div>
+</div>
+</div>
+</div>
+<script>
+const cv=document.getElementById('c'),x=cv.getContext('2d');let W,H;
+function sz(){const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio;x.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=r.width;H=r.height}
+addEventListener('resize',sz);sz();
+const CLAY='#C96442',SAGE='#7C8B6F',INK='#1A1714';
+function col(st){return st==='wait'?CLAY:st==='idle'?'#c3bba9':SAGE}
+let nodes=[],edges=[];
+function build(){nodes=[];edges=[];const cx=W*.46,cy=H*.55;
+ const root={x:cx,y:cy,r:24,st:'run',lbl:'main',depth:0,seed:0};nodes.push(root);
+ [['explore',-1.05],['plan',-.3],['tdd-impl',.5],['review',1.25]].forEach(([l,a],i)=>{const ang=-Math.PI/2+a,d=150;const n={x:cx+Math.cos(ang)*d,y:cy+Math.sin(ang)*d,r:14,st:i===3?'wait':'run',lbl:l,depth:1,a:ang,seed:i*1.7};nodes.push(n);edges.push([root,n]);
+  if(i===2){[['write-test',-.55,true],['impl',.4]].forEach(([l2,a2,sel])=>{const n2={x:n.x+Math.cos(ang+a2)*100,y:n.y+Math.sin(ang+a2)*100,r:11,st:'run',lbl:l2,depth:2,seed:9,sel};nodes.push(n2);edges.push([n,n2])})}});
+}
+build();addEventListener('resize',()=>setTimeout(build,30));
+let t=0;function loop(){t+=.016;x.clearRect(0,0,W,H);
+ edges.forEach(([a,b])=>{const mx=(a.x+b.x)/2+(b.seed%2?12:-12),my=(a.y+b.y)/2-16;
+  x.strokeStyle='rgba(26,23,20,.30)';x.lineWidth=1.5;x.lineCap='round';x.beginPath();x.moveTo(a.x,a.y);x.quadraticCurveTo(mx,my,b.x,b.y);x.stroke();
+  if(b.st!=='idle'){for(let k=0;k<3;k++){const p=((t*.4)+k/3)%1;const ix=(1-p)*(1-p)*a.x+2*(1-p)*p*mx+p*p*b.x;const iy=(1-p)*(1-p)*a.y+2*(1-p)*p*my+p*p*b.y;x.fillStyle=b.st==='wait'?CLAY:SAGE;x.globalAlpha=.8*(1-Math.abs(p-.5)*1.3);x.beginPath();x.arc(ix,iy,2.2,0,7);x.fill();x.globalAlpha=1}}});
+ nodes.forEach(n=>{const pulse=Math.sin(t*2+n.seed)*.5+.5;const c=col(n.st);
+  if(n.sel){x.beginPath();x.arc(n.x,n.y,n.r+13+pulse*3,0,7);x.strokeStyle=CLAY;x.lineWidth=1.5;x.setLineDash([4,5]);x.globalAlpha=.8;x.stroke();x.setLineDash([]);x.globalAlpha=1}
+  x.beginPath();x.arc(n.x,n.y,n.r+7+pulse*6,0,7);x.fillStyle=c;x.globalAlpha=.10+pulse*.08;x.fill();x.globalAlpha=1;
+  x.beginPath();x.arc(n.x,n.y,n.r,0,7);x.fillStyle='#fff';x.fill();x.lineWidth=n.depth===0?2.4:2;x.strokeStyle=n.depth===0?INK:c;x.stroke();
+  x.beginPath();x.arc(n.x,n.y,n.r*.42*pulse+2,0,7);x.fillStyle=c;x.globalAlpha=.55;x.fill();x.globalAlpha=1;
+  x.fillStyle=INK;x.font=(n.depth===0?'600 14px ':'500 11.5px ')+'JetBrains Mono,monospace';x.textAlign='center';x.fillText(n.lbl,n.x,n.y+n.r+16)});
+ requestAnimationFrame(loop)}loop();
+</script></body></html>
